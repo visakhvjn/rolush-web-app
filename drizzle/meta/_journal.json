@@ -57,6 +57,13 @@
       "when": 1777920150000,
       "tag": "0007_wooden_talisman",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1777987600000,
+      "tag": "0008_sturdy_killmonger",
+      "breakpoints": true
     }
   ]
 }

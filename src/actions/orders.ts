@@ -30,6 +30,10 @@ const cartItemSchema = z.object({
   price: z.string().min(1),
   quantity: z.number().int().positive(),
   size: z.string().optional(),
+  cakeMessage: z.string().max(200).optional(),
+  shape: z.string().optional(),
+  tier: z.string().optional(),
+  addons: z.array(z.string()).optional(),
 });
 
 export type CreateOrderState =
@@ -121,7 +125,9 @@ export async function placeCartOrder(
     (item, index) =>
       `${index + 1}. ${item.name}${item.size ? ` (${item.size})` : ""} x${item.quantity} - ${
         item.price
-      }`,
+      }${item.shape ? ` | Shape: ${item.shape}` : ""}${item.tier ? ` | Tier: ${item.tier}` : ""}${
+        item.addons && item.addons.length > 0 ? ` | Add-ons: ${item.addons.join(", ")}` : ""
+      }${item.cakeMessage ? ` | Cake message: ${item.cakeMessage}` : ""}`,
   );
   const message = `Cart order items:\n${lines.join("\n")}`;
 

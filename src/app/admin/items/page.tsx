@@ -1,7 +1,14 @@
 import { listCategories } from "@/actions/categories";
 import { listItems, toggleItemActive, toggleItemFeatured } from "@/actions/items";
 import { CreateItemModal } from "@/components/admin/create-item-modal";
+import { EditItemModal } from "@/components/admin/edit-item-modal";
 import { DeleteItemButton } from "@/components/admin/delete-item-button";
+
+function formatRsPrice(value: string | null | undefined): string {
+  const raw = (value ?? "").toString().trim();
+  // Stored values may include "Rs " from earlier UI copy; normalize for display.
+  return raw.replace(/^(rs)\s*/i, "").trim();
+}
 
 export default async function AdminItemsPage() {
   const [rows, categoryRows] = await Promise.all([listItems(), listCategories()]);
@@ -22,9 +29,9 @@ export default async function AdminItemsPage() {
         <table className="w-full text-left text-sm">
           <thead className="bg-[#edf2f8] text-xs uppercase tracking-wide text-[#4f6479]">
             <tr>
-              <th className="px-4 py-3 font-medium">Name</th>
+              <th className="w-[40%] px-4 py-3 font-medium">Name</th>
               <th className="px-4 py-3 font-medium">Category</th>
-              <th className="px-4 py-3 font-medium">Price</th>
+              <th className="px-4 py-3 font-medium">Price (Rs)</th>
               <th className="px-4 py-3 font-medium">Status</th>
               <th className="px-4 py-3 font-medium">Featured</th>
               <th className="px-4 py-3 font-medium text-right">Actions</th>
@@ -40,21 +47,27 @@ export default async function AdminItemsPage() {
             ) : (
               rows.map((row) => (
                 <tr key={row.id}>
-                  <td className="px-4 py-3">
+                  <td className="w-[40%] px-4 py-3">
                     <p className="font-medium text-[#0f2f4f]">{row.name}</p>
                     {row.description ? (
-                      <p className="text-xs text-[#4f6479]">{row.description}</p>
+                      <p className="line-clamp-2 text-xs text-[#4f6479]" title={row.description}>
+                        {row.description}
+                      </p>
                     ) : null}
                   </td>
                   <td className="px-4 py-3 text-[#4f6479]">{row.category}</td>
                   <td className="px-4 py-3 text-[#4f6479]">
                     {row.discountedPrice ? (
                       <div className="space-y-0.5">
-                        <p className="text-xs text-[#6d8196] line-through">{row.price}</p>
-                        <p className="font-medium text-[#0f2f4f]">{row.discountedPrice}</p>
+                        <p className="text-xs text-[#6d8196] line-through">
+                          {formatRsPrice(row.price)}
+                        </p>
+                        <p className="font-medium text-[#0f2f4f]">
+                          {formatRsPrice(row.discountedPrice)}
+                        </p>
                       </div>
                     ) : (
-                      row.price
+                      formatRsPrice(row.price)
                     )}
                   </td>
                   <td className="px-4 py-3">
@@ -68,7 +81,8 @@ export default async function AdminItemsPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex justify-end gap-2">
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <EditItemModal item={row} categories={categoryRows} />
                       <form action={toggleItemActive}>
                         <input type="hidden" name="id" value={row.id} />
                         <input

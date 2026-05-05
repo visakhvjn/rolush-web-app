@@ -31,24 +31,36 @@ export function ItemImageCarousel({ images, name }: ItemImageCarouselProps) {
         sizes="(max-width: 1024px) 100vw, 50vw"
       />
       {images.length > 1 ? (
-        <div className="mt-3 flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={() => setCurrent((value) => value - 1)}
-            className="rounded-full border border-[#d4dde6] px-3 py-1.5 text-xs text-[#1f4568] hover:bg-[#edf2f8]"
-          >
-            Prev
-          </button>
+        <div className="mt-4 space-y-2">
           <p className="text-xs text-[#4f6479]">
             {safeIndex + 1} / {images.length}
           </p>
-          <button
-            type="button"
-            onClick={() => setCurrent((value) => value + 1)}
-            className="rounded-full border border-[#d4dde6] px-3 py-1.5 text-xs text-[#1f4568] hover:bg-[#edf2f8]"
-          >
-            Next
-          </button>
+          <div className="flex gap-3 overflow-x-auto pb-1">
+            {images.map((img, index) => {
+              const isActive = index === safeIndex;
+              return (
+                <button
+                  key={`${img}-${index}`}
+                  type="button"
+                  onClick={() => setCurrent(index)}
+                  className={`relative shrink-0 overflow-hidden rounded-lg border-2 transition ${
+                    isActive
+                      ? "border-[#d3b06a] ring-2 ring-[#d3b06a]/25"
+                      : "border-[#d4dde6] hover:border-[#d3b06a]/60"
+                  }`}
+                >
+                  <Image
+                    src={img}
+                    alt={`${name} thumbnail ${index + 1}`}
+                    width={120}
+                    height={90}
+                    className="h-[72px] w-[96px] object-cover"
+                    sizes="96px"
+                  />
+                </button>
+              );
+            })}
+          </div>
         </div>
       ) : null}
     </div>

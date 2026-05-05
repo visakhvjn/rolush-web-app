@@ -9,6 +9,10 @@ type CartItem = {
   price: string;
   quantity: number;
   size?: string;
+  cakeMessage?: string;
+  shape?: string;
+  tier?: string;
+  addons?: string[];
 };
 
 const CART_STORAGE_KEY = "rolush-cart";
@@ -85,6 +89,26 @@ export function CartPage() {
                 className="rounded-2xl border border-[#d4dde6] bg-white p-4 shadow-sm"
               >
                 <p className="font-medium text-[#0f2f4f]">{item.name}</p>
+                {item.cakeMessage ? (
+                  <p className="mt-1 text-xs text-[#4f6479]">
+                    Message: <span className="font-medium text-[#35506a]">{item.cakeMessage}</span>
+                  </p>
+                ) : null}
+                {item.shape ? (
+                  <p className="mt-1 text-xs text-[#4f6479]">
+                    Shape: <span className="font-medium text-[#35506a]">{item.shape}</span>
+                  </p>
+                ) : null}
+                {item.tier ? (
+                  <p className="mt-1 text-xs text-[#4f6479]">
+                    Tier: <span className="font-medium text-[#35506a]">{item.tier}</span>
+                  </p>
+                ) : null}
+                {item.addons && item.addons.length > 0 ? (
+                  <p className="mt-1 text-xs text-[#4f6479]">
+                    Add-ons: <span className="font-medium text-[#35506a]">{item.addons.join(", ")}</span>
+                  </p>
+                ) : null}
                 <p className="mt-1 text-sm text-[#4f6479]">{item.price}</p>
                 <div className="mt-3 flex items-center gap-2">
                   <button

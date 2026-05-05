@@ -1,38 +1,56 @@
 "use client";
 
-import { createItem } from "@/actions/items";
+import { updateItem } from "@/actions/items";
+import type { CategoryRow, ItemRow } from "@/db/schema";
 import { FormSubmitButton } from "@/components/admin/form-submit-button";
 import { ItemOptionRows } from "@/components/admin/item-option-rows";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-type CategoryOption = {
-  id: string;
-  name: string;
-};
+function parseStoredOptions(raw: string | null): string[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    const vals = parsed.map((x) => String(x).trim()).filter(Boolean);
+    return vals.length > 0 ? vals : [];
+  } catch {
+    return [];
+  }
+}
 
-type CreateItemModalProps = {
-  categories: CategoryOption[];
-};
+function optionsForEditing(raw: string | null): string[] {
+  const vals = parseStoredOptions(raw);
+  return vals.length > 0 ? vals : [""];
+}
 
-export function CreateItemModal({ categories }: CreateItemModalProps) {
+export function EditItemModal({
+  item,
+  categories,
+}: {
+  item: ItemRow;
+  categories: CategoryRow[];
+}) {
   const [open, setOpen] = useState(false);
-  const [weights, setWeights] = useState<string[]>(["250g", "500g", "1kg"]);
-  const [shapes, setShapes] = useState<string[]>([
-    "Round",
-    "Square",
-    "Heart",
-    "Star",
-  ]);
-  const [tiers, setTiers] = useState<string[]>(["Single", "2-Tier", "3-Tier"]);
-  const [addons, setAddons] = useState<string[]>([
-    "Flowers",
-    "Berries",
-    "Edible Glitter",
-    "Chocolate Shavings",
-  ]);
+  const defaultCategoryId = useMemo(() => {
+    const match = categories.find((c) => c.name === item.category);
+    return match?.id ?? "";
+  }, [categories, item.category]);
 
-  async function handleCreateItem(formData: FormData) {
+  const [weights, setWeights] = useState<string[]>(() => optionsForEditing(item.cakeWeights));
+  const [shapes, setShapes] = useState<string[]>(() => optionsForEditing(item.cakeShapes));
+  const [tiers, setTiers] = useState<string[]>(() => optionsForEditing(item.cakeTiers));
+  const [addons, setAddons] = useState<string[]>(() => optionsForEditing(item.cakeAddons));
+
+  useEffect(() => {
+    if (!open) return;
+    setWeights(optionsForEditing(item.cakeWeights));
+    setShapes(optionsForEditing(item.cakeShapes));
+    setTiers(optionsForEditing(item.cakeTiers));
+    setAddons(optionsForEditing(item.cakeAddons));
+  }, [open, item.cakeWeights, item.cakeShapes, item.cakeTiers, item.cakeAddons]);
+
+  async function handleSubmit(formData: FormData) {
     const normalize = (values: string[]) =>
       values.map((value) => value.trim()).filter((value) => value.length > 0);
     formData.set("cakeWeights", JSON.stringify(normalize(weights)));
@@ -40,7 +58,7 @@ export function CreateItemModal({ categories }: CreateItemModalProps) {
     formData.set("cakeTiers", JSON.stringify(normalize(tiers)));
     formData.set("cakeAddons", JSON.stringify(normalize(addons)));
 
-    const result = await createItem(formData);
+    const result = await updateItem(formData);
     if (result.ok) {
       setOpen(false);
     }
@@ -51,16 +69,16 @@ export function CreateItemModal({ categories }: CreateItemModalProps) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-full bg-[#0f2f4f] px-5 py-2 text-sm font-medium text-white hover:bg-[#0b2239]"
+        className="rounded-md border border-[#d4dde6] px-2.5 py-1 text-xs text-[#0f2f4f] hover:bg-[#edf2f8]"
       >
-        Add item
+        Edit
       </button>
 
       {open ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="max-h-[85vh] w-full max-w-xl overflow-y-auto rounded-2xl border border-[#d4dde6] bg-white p-5 shadow-lg">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-[#0f2f4f]">Add new item</h2>
+              <h2 className="text-base font-semibold text-[#0f2f4f]">Edit item</h2>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
@@ -71,25 +89,28 @@ export function CreateItemModal({ categories }: CreateItemModalProps) {
             </div>
 
             <form
-              action={handleCreateItem}
+              action={handleSubmit}
               encType="multipart/form-data"
               className="mt-4 grid gap-3"
             >
+              <input type="hidden" name="id" value={item.id} />
               <input
                 name="name"
                 placeholder="Item name"
                 required
+                defaultValue={item.name}
                 className="rounded-lg border border-[#d4dde6] px-3 py-2 text-sm outline-none ring-[#d3b06a] focus:ring-2"
               />
               <div className="space-y-1">
-                <label htmlFor="categoryId" className="block text-xs font-medium text-[#4f6479]">
+                <label htmlFor={`categoryId-edit-${item.id}`} className="block text-xs font-medium text-[#4f6479]">
                   Category
                 </label>
                 <select
-                  id="categoryId"
+                  id={`categoryId-edit-${item.id}`}
                   name="categoryId"
                   required={categories.length > 0}
                   disabled={categories.length === 0}
+                  defaultValue={defaultCategoryId || ""}
                   className="w-full rounded-lg border border-[#d4dde6] bg-white px-3 py-2 text-sm outline-none ring-[#d3b06a] focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {categories.length === 0 ? (
@@ -109,8 +130,12 @@ export function CreateItemModal({ categories }: CreateItemModalProps) {
                   <p className="text-xs text-[#4f6479]">
                     <Link href="/admin/categories" className="text-[#b8944f] underline">
                       Create categories
-                    </Link>{" "}
-                    to enable this field.
+                    </Link>
+                  </p>
+                ) : null}
+                {!defaultCategoryId && categories.length > 0 ? (
+                  <p className="text-xs text-amber-800">
+                    Current category name &quot;{item.category}&quot; didn&apos;t match a row—pick the correct category.
                   </p>
                 ) : null}
               </div>
@@ -118,38 +143,45 @@ export function CreateItemModal({ categories }: CreateItemModalProps) {
                 name="price"
                 placeholder="Actual price (e.g. 1200)"
                 required
+                defaultValue={item.price}
                 className="rounded-lg border border-[#d4dde6] px-3 py-2 text-sm outline-none ring-[#d3b06a] focus:ring-2"
               />
               <input
                 name="discountedPrice"
                 placeholder="Discounted price (optional)"
+                defaultValue={item.discountedPrice ?? ""}
                 className="rounded-lg border border-[#d4dde6] px-3 py-2 text-sm outline-none ring-[#d3b06a] focus:ring-2"
               />
-              <input
+              <textarea
                 name="description"
-                placeholder="Short description (optional)"
-                className="rounded-lg border border-[#d4dde6] px-3 py-2 text-sm outline-none ring-[#d3b06a] focus:ring-2"
+                placeholder="Description (optional)"
+                rows={8}
+                defaultValue={item.description ?? ""}
+                className="min-h-[10rem] w-full resize-y rounded-lg border border-[#d4dde6] px-3 py-2 text-sm outline-none ring-[#d3b06a] focus:ring-2"
               />
               <label className="inline-flex items-center gap-2 text-sm text-[#35506a]">
-                <input type="checkbox" name="isFeatured" value="true" />
+                <input
+                  type="checkbox"
+                  name="isFeatured"
+                  value="true"
+                  defaultChecked={item.isFeatured}
+                />
                 Mark as featured item
               </label>
               <ItemOptionRows
                 title="Cake weights"
                 options={weights}
                 onChange={(index, value) =>
-                  setWeights((prev) => prev.map((item, i) => (i === index ? value : item)))
+                  setWeights((prev) => prev.map((v, i) => (i === index ? value : v)))
                 }
                 onAdd={() => setWeights((prev) => [...prev, ""])}
-                onRemove={(index) =>
-                  setWeights((prev) => prev.filter((_, i) => i !== index))
-                }
+                onRemove={(index) => setWeights((prev) => prev.filter((_, i) => i !== index))}
               />
               <ItemOptionRows
                 title="Cake shapes"
                 options={shapes}
                 onChange={(index, value) =>
-                  setShapes((prev) => prev.map((item, i) => (i === index ? value : item)))
+                  setShapes((prev) => prev.map((v, i) => (i === index ? value : v)))
                 }
                 onAdd={() => setShapes((prev) => [...prev, ""])}
                 onRemove={(index) => setShapes((prev) => prev.filter((_, i) => i !== index))}
@@ -158,7 +190,7 @@ export function CreateItemModal({ categories }: CreateItemModalProps) {
                 title="Cake tiers"
                 options={tiers}
                 onChange={(index, value) =>
-                  setTiers((prev) => prev.map((item, i) => (i === index ? value : item)))
+                  setTiers((prev) => prev.map((v, i) => (i === index ? value : v)))
                 }
                 onAdd={() => setTiers((prev) => [...prev, ""])}
                 onRemove={(index) => setTiers((prev) => prev.filter((_, i) => i !== index))}
@@ -167,17 +199,17 @@ export function CreateItemModal({ categories }: CreateItemModalProps) {
                 title="Add-ons"
                 options={addons}
                 onChange={(index, value) =>
-                  setAddons((prev) => prev.map((item, i) => (i === index ? value : item)))
+                  setAddons((prev) => prev.map((v, i) => (i === index ? value : v)))
                 }
                 onAdd={() => setAddons((prev) => [...prev, ""])}
                 onRemove={(index) => setAddons((prev) => prev.filter((_, i) => i !== index))}
               />
               <div className="space-y-1">
-                <label htmlFor="images" className="block text-xs font-medium text-[#4f6479]">
-                  Images (optional, multiple)
+                <label htmlFor={`images-edit-${item.id}`} className="block text-xs font-medium text-[#4f6479]">
+                  Add images (optional, appends to existing)
                 </label>
                 <input
-                  id="images"
+                  id={`images-edit-${item.id}`}
                   name="images"
                   type="file"
                   accept="image/png,image/jpeg,image/webp,image/gif"
@@ -185,12 +217,12 @@ export function CreateItemModal({ categories }: CreateItemModalProps) {
                   className="w-full rounded-lg border border-[#d4dde6] bg-white px-3 py-2 text-sm text-[#0f2f4f] file:mr-3 file:rounded-md file:border-0 file:bg-[#e6edf4] file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-[#1f4568] hover:file:bg-[#d6e2ef]"
                 />
                 <p className="text-xs text-[#4f6479]">
-                  Up to 12 images. Max 8MB each. PNG, JPG, WEBP, GIF.
+                  Up to 12 images total per item. Max 8MB each. PNG, JPG, WEBP, GIF.
                 </p>
               </div>
               <FormSubmitButton
-                idleLabel="Add item"
-                pendingLabel="Adding item..."
+                idleLabel="Save changes"
+                pendingLabel="Saving..."
                 disabled={categories.length === 0}
                 className="w-fit rounded-full bg-[#0f2f4f] px-5 py-2 text-sm font-medium text-white hover:bg-[#0b2239] disabled:cursor-not-allowed disabled:opacity-60"
               />

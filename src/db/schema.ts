@@ -55,6 +55,10 @@ export const items = pgTable("items", {
   isActive: boolean("is_active").notNull().default(true),
   isFeatured: boolean("is_featured").notNull().default(false),
   description: text("description"),
+  cakeWeights: text("cake_weights"),
+  cakeShapes: text("cake_shapes"),
+  cakeTiers: text("cake_tiers"),
+  cakeAddons: text("cake_addons"),
 });
 
 export const itemImages = pgTable("item_images", {

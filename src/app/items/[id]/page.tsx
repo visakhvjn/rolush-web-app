@@ -9,6 +9,19 @@ type ItemDetailsPageProps = {
   params: Promise<{ id: string }>;
 };
 
+function parseOptionList(raw: string | null | undefined): string[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((value) => String(value).trim())
+      .filter((value) => value.length > 0);
+  } catch {
+    return [];
+  }
+}
+
 export default async function ItemDetailsPage({ params }: ItemDetailsPageProps) {
   const { id } = await params;
   const item = await getActiveItemById(id);
@@ -16,6 +29,11 @@ export default async function ItemDetailsPage({ params }: ItemDetailsPageProps) 
   if (!item) {
     notFound();
   }
+
+  const weightOptions = parseOptionList(item.cakeWeights);
+  const shapeOptions = parseOptionList(item.cakeShapes);
+  const tierOptions = parseOptionList(item.cakeTiers);
+  const addonOptions = parseOptionList(item.cakeAddons);
 
   return (
     <>
@@ -52,8 +70,12 @@ export default async function ItemDetailsPage({ params }: ItemDetailsPageProps) 
                   name: item.name,
                   price: item.discountedPrice || item.price,
                 }}
-                sizeOptions={["Half Pound", "1 Pound"]}
-                defaultSize="1 Pound"
+                sizeOptions={weightOptions.length > 0 ? weightOptions : ["Half Pound", "1 Pound"]}
+                defaultSize={weightOptions[0] ?? "1 Pound"}
+                shapeOptions={shapeOptions}
+                tierOptions={tierOptions}
+                addonOptions={addonOptions}
+                enableCakeMessage
               />
             </div>
           </div>
