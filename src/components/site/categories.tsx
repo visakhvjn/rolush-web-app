@@ -4,6 +4,7 @@ import type { ItemWithImages } from "@/actions/items";
 import { AddToCartButton } from "@/components/site/add-to-cart-button";
 import type { CategoryRow } from "@/db/schema";
 import Link from "next/link";
+import Image from "next/image";
 import { useMemo, useState } from "react";
 
 type SiteCategoriesProps = {
@@ -58,10 +59,12 @@ export function SiteCategories({ categories, items }: SiteCategoriesProps) {
                       }`}
                     >
                       {category.imageUrl ? (
-                        <img
+                        <Image
                           src={category.imageUrl}
                           alt={category.name}
                           className="h-full w-full object-cover"
+                          fill
+                          sizes="120px"
                         />
                       ) : (
                         <span className="h-full w-full bg-gradient-to-br from-[#dbe5f0] to-[#a7bcd1]" />
@@ -99,10 +102,13 @@ export function SiteCategories({ categories, items }: SiteCategoriesProps) {
                         className="rounded-2xl border border-[#d4dde6] bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-[#d3b06a]"
                       >
                         {item.images[0] ? (
-                          <img
+                          <Image
                             src={item.images[0]}
                             alt={item.name}
                             className="aspect-square w-full rounded-xl object-cover"
+                            width={600}
+                            height={600}
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                           />
                         ) : (
                           <div className="aspect-square w-full rounded-xl bg-gradient-to-br from-[#dbe5f0] to-[#a7bcd1]" />

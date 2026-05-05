@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 
 type ItemImageCarouselProps = {
@@ -21,10 +22,13 @@ export function ItemImageCarousel({ images, name }: ItemImageCarouselProps) {
 
   return (
     <div>
-      <img
+      <Image
         src={image}
         alt={`${name} image ${safeIndex + 1}`}
         className="aspect-[4/3] w-full rounded-2xl object-cover"
+        width={1200}
+        height={900}
+        sizes="(max-width: 1024px) 100vw, 50vw"
       />
       {images.length > 1 ? (
         <div className="mt-3 flex items-center justify-between gap-3">

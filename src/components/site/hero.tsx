@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export function SiteHero() {
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-[#e8eef5] via-[#f3f6fa] to-[#edf2f8] px-4 pb-20 pt-16 sm:pt-24">
@@ -16,11 +18,15 @@ export function SiteHero() {
             careful detail — baked fresh and styled to match your story.
           </p>
         </div>
-        <div className="overflow-hidden rounded-3xl border border-[#d4dde6] bg-white shadow-xl">
-          <img
+        <div className="relative overflow-hidden rounded-3xl border border-[#d4dde6] bg-white shadow-xl">
+          <Image
             src="/sample/FERRERO W STAND.jpg.jpeg"
             alt="Elegant chocolate cake by Rolush"
             className="aspect-[4/3] w-full object-cover"
+            width={1200}
+            height={900}
+            priority
+            sizes="(max-width: 1024px) 100vw, 50vw"
           />
         </div>
       </div>

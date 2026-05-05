@@ -1,6 +1,7 @@
 import type { ItemWithImages } from "@/actions/items";
 import { AddToCartButton } from "@/components/site/add-to-cart-button";
 import Link from "next/link";
+import Image from "next/image";
 
 type FeaturedCakesProps = {
   items: ItemWithImages[];
@@ -26,10 +27,13 @@ export function FeaturedCakes({ items }: FeaturedCakesProps) {
               className="rounded-2xl border border-[#d4dde6] bg-white p-5 shadow-sm"
             >
               {item.images[0] ? (
-                <img
+                <Image
                   src={item.images[0]}
                   alt={item.name}
                   className="aspect-[4/3] w-full rounded-xl object-cover"
+                  width={800}
+                  height={600}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 />
               ) : (
                 <div className="aspect-[4/3] w-full rounded-xl bg-gradient-to-br from-[#dbe5f0] to-[#a7bcd1]" />
