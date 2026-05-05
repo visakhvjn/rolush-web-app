@@ -24,8 +24,6 @@ export default function AdminLoginPage() {
       redirect: false,
     });
 
-    console.log(res);
-
     setPending(false);
 
     if (res?.error) {

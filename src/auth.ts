@@ -1,6 +1,5 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
@@ -21,23 +20,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const email = credentials?.email as string | undefined;
         const password = credentials?.password as string | undefined;
 
-        console.log(email, password);
-
         if (!email || !password) return null;
 
         const adminEmail = process.env.ADMIN_EMAIL;
-        const hash = process.env.ADMIN_PASSWORD_HASH;
+        const adminPassword = process.env.ADMIN_PASSWORD;
 
-        console.log(adminEmail, hash);
-
-        if (!adminEmail || !hash) {
-          console.error("ADMIN_EMAIL or ADMIN_PASSWORD_HASH is not configured");
+        if (!adminEmail || !adminPassword) {
+          console.error("ADMIN_EMAIL or ADMIN_PASSWORD is not configured");
           return null;
         }
         if (email !== adminEmail) return null;
-        const ok = await bcrypt.compare(password, hash);
-        
-        if (!ok) return null;
+        if (password !== adminPassword) return null;
         return { id: "admin", email: adminEmail, name: "Admin" };
       },
     }),
