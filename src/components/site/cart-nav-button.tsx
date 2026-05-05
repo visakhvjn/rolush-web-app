@@ -24,7 +24,7 @@ function getCartCount(): number {
 }
 
 export function CartNavButton() {
-  const [count, setCount] = useState(0);
+  const [count, setCount] = useState(() => getCartCount());
 
   useEffect(() => {
     const refresh = () => setCount(getCartCount());
@@ -37,12 +37,14 @@ export function CartNavButton() {
     };
   }, []);
 
+  if (count <= 0) return null;
+
   return (
     <Link
       href="/cart"
-      className="inline-flex items-center rounded-full border border-[#d4dde6] bg-white px-4 py-2 text-sm font-medium text-[#0f2f4f] transition hover:border-[#d3b06a]"
+      className="inline-flex items-center rounded-full border border-[#d4dde6] bg-white px-4 py-2 text-sm font-medium text-[#0f2f4f] transition hover:bg-[#edf2f8]"
     >
-      Cart{count > 0 ? ` (${count})` : ""}
+      Cart ({count})
     </Link>
   );
 }

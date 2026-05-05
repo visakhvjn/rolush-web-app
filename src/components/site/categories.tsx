@@ -38,42 +38,46 @@ export function SiteCategories({ categories, items }: SiteCategoriesProps) {
           </p>
         ) : (
           <>
-            <div className="mt-12 flex flex-wrap justify-center gap-5">
-              {categories.map((category) => {
-                const isSelected = category.id === selectedCategoryId;
-                return (
-                  <button
-                    key={category.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedCategoryId(category.id);
-                      setShowAllForSelected(false);
-                    }}
-                    className="group flex w-[120px] flex-col items-center text-center sm:w-[140px]"
-                  >
-                    <span
-                      className={`relative flex h-[100px] w-[100px] items-center justify-center overflow-hidden rounded-full border-2 transition sm:h-[120px] sm:w-[120px] ${
-                        isSelected
-                          ? "border-[#d3b06a] ring-4 ring-[#d3b06a]/20"
-                          : "border-[#d4dde6] group-hover:border-[#d3b06a]/60"
-                      }`}
+            <div className="mt-12 -mx-4 overflow-x-auto px-4 sm:mx-0 sm:overflow-visible sm:px-0">
+              <div className="flex w-max gap-4 pb-1 sm:w-auto sm:flex-wrap sm:justify-center sm:gap-5">
+                {categories.map((category) => {
+                  const isSelected = category.id === selectedCategoryId;
+                  return (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCategoryId(category.id);
+                        setShowAllForSelected(false);
+                      }}
+                      className="group flex w-[108px] shrink-0 flex-col items-center text-center sm:w-[140px]"
                     >
-                      {category.imageUrl ? (
-                        <Image
-                          src={category.imageUrl}
-                          alt={category.name}
-                          className="h-full w-full object-cover"
-                          fill
-                          sizes="120px"
-                        />
-                      ) : (
-                        <span className="h-full w-full bg-gradient-to-br from-[#dbe5f0] to-[#a7bcd1]" />
-                      )}
-                    </span>
-                    <span className="mt-2 text-sm font-medium text-[#0f2f4f]">{category.name}</span>
-                  </button>
-                );
-              })}
+                      <span
+                        className={`relative flex h-[88px] w-[88px] items-center justify-center overflow-hidden rounded-full border-2 transition sm:h-[120px] sm:w-[120px] ${
+                          isSelected
+                            ? "border-[#d3b06a] ring-4 ring-[#d3b06a]/20"
+                            : "border-[#d4dde6] group-hover:border-[#d3b06a]/60"
+                        }`}
+                      >
+                        {category.imageUrl ? (
+                          <Image
+                            src={category.imageUrl}
+                            alt={category.name}
+                            className="h-full w-full object-cover"
+                            fill
+                            sizes="120px"
+                          />
+                        ) : (
+                          <span className="h-full w-full bg-gradient-to-br from-[#dbe5f0] to-[#a7bcd1]" />
+                        )}
+                      </span>
+                      <span className="mt-2 line-clamp-2 text-xs font-medium text-[#0f2f4f] sm:text-sm">
+                        {category.name}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             <div className="mt-10 text-center">
@@ -95,7 +99,7 @@ export function SiteCategories({ categories, items }: SiteCategoriesProps) {
                 </p>
               ) : (
                 <>
-                  <div className="mx-auto mt-6 grid max-w-6xl gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="mx-auto mt-6 grid max-w-6xl grid-cols-2 gap-4 lg:grid-cols-4">
                     {visibleItems.map((item) => (
                       <article
                         key={item.id}

@@ -33,6 +33,8 @@ export function OrdersFilters() {
     if (fromDate) params.set("from", fromDate);
     else params.delete("from");
 
+    params.delete("page");
+
     startTransition(() => {
       router.push(`/admin/orders?${params.toString()}`);
     });

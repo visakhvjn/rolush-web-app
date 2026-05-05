@@ -3,6 +3,9 @@ import { listItems, toggleItemActive, toggleItemFeatured } from "@/actions/items
 import { CreateItemModal } from "@/components/admin/create-item-modal";
 import { EditItemModal } from "@/components/admin/edit-item-modal";
 import { DeleteItemButton } from "@/components/admin/delete-item-button";
+import { TablePagination } from "@/components/admin/table-pagination";
+
+const PAGE_SIZE = 10;
 
 function formatRsPrice(value: string | null | undefined): string {
   const raw = (value ?? "").toString().trim();
@@ -10,8 +13,20 @@ function formatRsPrice(value: string | null | undefined): string {
   return raw.replace(/^(rs)\s*/i, "").trim();
 }
 
-export default async function AdminItemsPage() {
+export default async function AdminItemsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = await searchParams;
   const [rows, categoryRows] = await Promise.all([listItems(), listCategories()]);
+  const pageRaw = typeof sp.page === "string" ? sp.page : "1";
+  const parsedPage = Number.parseInt(pageRaw, 10);
+  const requestedPage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const currentPage = Math.min(requestedPage, totalPages);
+  const offset = (currentPage - 1) * PAGE_SIZE;
+  const pagedRows = rows.slice(offset, offset + PAGE_SIZE);
 
   return (
     <main className="px-4 py-8 lg:px-8">
@@ -45,7 +60,7 @@ export default async function AdminItemsPage() {
                 </td>
               </tr>
             ) : (
-              rows.map((row) => (
+              pagedRows.map((row) => (
                 <tr key={row.id}>
                   <td className="w-[40%] px-4 py-3">
                     <p className="font-medium text-[#0f2f4f]">{row.name}</p>
@@ -119,6 +134,12 @@ export default async function AdminItemsPage() {
             )}
           </tbody>
         </table>
+        <TablePagination
+          basePath="/admin/items"
+          currentPage={currentPage}
+          totalPages={totalPages}
+          searchParams={sp}
+        />
       </section>
     </main>
   );

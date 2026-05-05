@@ -1,15 +1,24 @@
 import { listOrders } from "@/actions/orders";
 import { OrdersFilters } from "@/components/admin/orders-filters";
+import { TablePagination } from "@/components/admin/table-pagination";
 import { ORDER_STATUS_LABELS } from "@/lib/order-status";
 import type { OrderRow } from "@/db/schema";
 import Link from "next/link";
 import { Suspense } from "react";
+
+const PAGE_SIZE = 10;
 
 function formatDate(d: Date) {
   return new Intl.DateTimeFormat("en-IN", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(d);
+}
+
+function sourceLabel(source: string) {
+  if (source === "web-custom") return "Custom order";
+  if (source === "web-cart") return "Cart order";
+  return "Website request";
 }
 
 async function OrdersTable({
@@ -45,6 +54,13 @@ async function OrdersTable({
     q,
     fromDate,
   });
+  const pageRaw = typeof searchParams.page === "string" ? searchParams.page : "1";
+  const parsedPage = Number.parseInt(pageRaw, 10);
+  const requestedPage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const currentPage = Math.min(requestedPage, totalPages);
+  const offset = (currentPage - 1) * PAGE_SIZE;
+  const pagedRows = rows.slice(offset, offset + PAGE_SIZE);
 
   if (rows.length === 0) {
     return (
@@ -63,12 +79,13 @@ async function OrdersTable({
             <th className="px-4 py-3 font-medium">Customer</th>
             <th className="px-4 py-3 font-medium">Phone</th>
             <th className="px-4 py-3 font-medium">Event</th>
+            <th className="px-4 py-3 font-medium">Type</th>
             <th className="px-4 py-3 font-medium">Status</th>
             <th className="w-px px-4 py-3 font-medium" />
           </tr>
         </thead>
         <tbody className="divide-y divide-[#e6edf4]">
-          {rows.map((row) => (
+          {pagedRows.map((row) => (
             <tr key={row.id} className="hover:bg-[#f7fafe]">
               <td className="whitespace-nowrap px-4 py-3 text-[#0f2f4f]">
                 {formatDate(row.createdAt)}
@@ -80,6 +97,7 @@ async function OrdersTable({
               <td className="px-4 py-3 text-[#4f6479]">
                 {row.eventDate || "—"}
               </td>
+              <td className="px-4 py-3 text-[#4f6479]">{sourceLabel(row.source)}</td>
               <td className="px-4 py-3">
                 <span className="inline-flex rounded-full bg-[#d9e4f0] px-2.5 py-0.5 text-xs font-medium text-[#1f4568]">
                   {ORDER_STATUS_LABELS[row.status]}
@@ -97,6 +115,12 @@ async function OrdersTable({
           ))}
         </tbody>
       </table>
+      <TablePagination
+        basePath="/admin/orders"
+        currentPage={currentPage}
+        totalPages={totalPages}
+        searchParams={searchParams}
+      />
     </div>
   );
 }

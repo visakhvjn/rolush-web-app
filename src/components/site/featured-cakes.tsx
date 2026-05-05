@@ -20,11 +20,12 @@ export function FeaturedCakes({ items }: FeaturedCakesProps) {
           Our highlighted picks for this season. Explore details and order your favorite.
         </p>
 
-        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-12 -mx-4 overflow-x-auto px-4 sm:mx-0 sm:overflow-visible sm:px-0">
+          <div className="flex w-max gap-4 pb-1 sm:grid sm:w-auto sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => (
             <article
               key={item.id}
-              className="rounded-2xl border border-[#d4dde6] bg-white p-5 shadow-sm"
+              className="w-[84vw] max-w-[22rem] rounded-2xl border border-[#d4dde6] bg-white p-5 shadow-sm sm:w-auto sm:max-w-none"
             >
               {item.images[0] ? (
                 <Image
@@ -70,6 +71,7 @@ export function FeaturedCakes({ items }: FeaturedCakesProps) {
               </div>
             </article>
           ))}
+          </div>
         </div>
       </div>
     </section>

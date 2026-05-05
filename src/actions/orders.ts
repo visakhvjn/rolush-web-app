@@ -4,6 +4,9 @@ import { auth } from "@/auth";
 import { getDb } from "@/db";
 import { orders, type OrderRow } from "@/db/schema";
 import { and, desc, eq, gte, ilike, or } from "drizzle-orm";
+import { randomUUID } from "node:crypto";
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -36,11 +39,59 @@ const cartItemSchema = z.object({
   addons: z.array(z.string()).optional(),
 });
 
+const customOrderSchema = z.object({
+  customerName: z.string().min(1, "Name is required").max(200),
+  phone: z.string().min(6, "Enter a valid phone number").max(30),
+  eventDate: z.string().min(1, "Event date is required"),
+  servings: z.string().min(1, "Servings is required").max(120),
+  flavour: z.string().min(1, "Flavour is required").max(120),
+  cakeShape: z.string().min(1, "Cake shape is required").max(120),
+  designNotes: z.string().min(1, "Design notes are required").max(5000),
+});
+
+const MAX_REFERENCE_IMAGE_SIZE_BYTES = 8 * 1024 * 1024;
+const ALLOWED_REFERENCE_IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+]);
+
+function extFromImageType(type: string): string | undefined {
+  if (type === "image/jpeg") return "jpg";
+  if (type === "image/png") return "png";
+  if (type === "image/webp") return "webp";
+  if (type === "image/gif") return "gif";
+  return undefined;
+}
+
+async function saveCustomOrderReferenceImage(file: File): Promise<string | null> {
+  if (file.size <= 0) return null;
+  if (!ALLOWED_REFERENCE_IMAGE_TYPES.has(file.type)) return null;
+  if (file.size > MAX_REFERENCE_IMAGE_SIZE_BYTES) return null;
+
+  const ext = extFromImageType(file.type);
+  if (!ext) return null;
+
+  const uploadDir = path.join(process.cwd(), "public", "uploads", "orders");
+  await mkdir(uploadDir, { recursive: true });
+
+  const fileName = `${randomUUID()}.${ext}`;
+  const outputPath = path.join(uploadDir, fileName);
+  const arrayBuffer = await file.arrayBuffer();
+  await writeFile(outputPath, Buffer.from(arrayBuffer));
+  return `/uploads/orders/${fileName}`;
+}
+
 export type CreateOrderState =
   | { ok: true; message: string }
   | { ok: false; message: string; fieldErrors?: Record<string, string[]> };
 
 export type PlaceCartOrderState =
+  | { ok: true; message: string }
+  | { ok: false; message: string; fieldErrors?: Record<string, string[]> };
+
+export type CreateCustomCakeOrderState =
   | { ok: true; message: string }
   | { ok: false; message: string; fieldErrors?: Record<string, string[]> };
 
@@ -143,6 +194,76 @@ export async function placeCartOrder(
 
   revalidatePath("/admin/orders");
   return { ok: true, message: "Order placed successfully." };
+}
+
+export async function createCustomCakeOrder(
+  _prev: CreateCustomCakeOrderState | undefined,
+  formData: FormData,
+): Promise<CreateCustomCakeOrderState> {
+  const raw = {
+    customerName: formData.get("customerName")?.toString() ?? "",
+    phone: formData.get("phone")?.toString() ?? "",
+    eventDate: formData.get("eventDate")?.toString() ?? "",
+    servings: formData.get("servings")?.toString() ?? "",
+    flavour: formData.get("flavour")?.toString() ?? "",
+    cakeShape: formData.get("cakeShape")?.toString() ?? "",
+    designNotes: formData.get("designNotes")?.toString() ?? "",
+  };
+
+  const parsed = customOrderSchema.safeParse(raw);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: "Please fill all required fields.",
+      fieldErrors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
+    };
+  }
+
+  const referenceFile = formData.get("referenceImage");
+  if (!(referenceFile instanceof File) || referenceFile.size <= 0) {
+    return {
+      ok: false,
+      message: "Reference image is required.",
+      fieldErrors: { referenceImage: ["Reference image is required."] },
+    };
+  }
+
+  const imageUrl = await saveCustomOrderReferenceImage(referenceFile);
+  if (!imageUrl) {
+    return {
+      ok: false,
+      message: "Reference image is invalid. Use PNG, JPG, WEBP, or GIF up to 8MB.",
+      fieldErrors: {
+        referenceImage: ["Use PNG, JPG, WEBP, or GIF up to 8MB."],
+      },
+    };
+  }
+
+  const data = parsed.data;
+  const message = [
+    "Custom order request:",
+    `Servings: ${data.servings}`,
+    `Flavour: ${data.flavour}`,
+    `Cake shape: ${data.cakeShape}`,
+    `Design notes: ${data.designNotes}`,
+  ].join("\n");
+
+  const db = getDb();
+  await db.insert(orders).values({
+    customerName: data.customerName,
+    phone: data.phone,
+    email: null,
+    eventDate: data.eventDate,
+    message,
+    imageUrl,
+    source: "web-custom",
+  });
+
+  revalidatePath("/admin/orders");
+  return {
+    ok: true,
+    message: "Custom order submitted. We will contact you shortly.",
+  };
 }
 
 export async function listOrders(filters: {

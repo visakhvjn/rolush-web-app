@@ -4,11 +4,12 @@ export function SiteFooter() {
       <div className="mx-auto flex max-w-6xl flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="font-serif text-xl font-semibold text-[#f6f9fc]">
-            Rolush Cafe
+            Rolush<span className="text-[#d3b06a]">.</span>
           </p>
-          <p className="mt-2 max-w-sm text-sm text-[#c3d4e4]/90">
-            Custom cakes in Kannur. Replace this footer text with your address and
-            hours.
+          <p className="max-w-sm text-sm text-[#c3d4e4]/90">
+          </p>
+          <p className="text-sm text-[#c3d4e4]/90">
+            From birthdays to weddings, we design flavour-forward custom cakes with <br />careful detail — baked fresh and styled to match your story.
           </p>
         </div>
         <div className="flex flex-col gap-3 text-sm">

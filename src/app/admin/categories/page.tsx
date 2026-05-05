@@ -1,9 +1,24 @@
 import { listCategories } from "@/actions/categories";
 import { CreateCategoryModal } from "@/components/admin/create-category-modal";
 import { DeleteCategoryButton } from "@/components/admin/delete-category-button";
+import { TablePagination } from "@/components/admin/table-pagination";
 
-export default async function AdminCategoriesPage() {
+const PAGE_SIZE = 10;
+
+export default async function AdminCategoriesPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = await searchParams;
   const rows = await listCategories();
+  const pageRaw = typeof sp.page === "string" ? sp.page : "1";
+  const parsedPage = Number.parseInt(pageRaw, 10);
+  const requestedPage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const currentPage = Math.min(requestedPage, totalPages);
+  const offset = (currentPage - 1) * PAGE_SIZE;
+  const pagedRows = rows.slice(offset, offset + PAGE_SIZE);
 
   return (
     <main className="px-4 py-8 lg:px-8">
@@ -35,7 +50,7 @@ export default async function AdminCategoriesPage() {
                 </td>
               </tr>
             ) : (
-              rows.map((row) => (
+              pagedRows.map((row) => (
                 <tr key={row.id}>
                   <td className="px-4 py-3">
                     {row.imageUrl ? (
@@ -60,6 +75,12 @@ export default async function AdminCategoriesPage() {
             )}
           </tbody>
         </table>
+        <TablePagination
+          basePath="/admin/categories"
+          currentPage={currentPage}
+          totalPages={totalPages}
+          searchParams={sp}
+        />
       </section>
     </main>
   );
