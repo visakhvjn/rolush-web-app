@@ -2,6 +2,7 @@ import { listCategories } from "@/actions/categories";
 import { CreateCategoryModal } from "@/components/admin/create-category-modal";
 import { DeleteCategoryButton } from "@/components/admin/delete-category-button";
 import { TablePagination } from "@/components/admin/table-pagination";
+import { optimizeCloudinaryImageUrl } from "@/lib/cloudinary-url";
 
 const PAGE_SIZE = 10;
 
@@ -55,7 +56,10 @@ export default async function AdminCategoriesPage({
                   <td className="px-4 py-3">
                     {row.imageUrl ? (
                       <img
-                        src={row.imageUrl}
+                        src={optimizeCloudinaryImageUrl(row.imageUrl, {
+                          width: 96,
+                          height: 96,
+                        })}
                         alt={row.name}
                         className="h-12 w-12 rounded-lg object-cover"
                       />

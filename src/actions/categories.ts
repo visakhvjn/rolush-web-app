@@ -3,10 +3,9 @@
 import { auth } from "@/auth";
 import { getDb } from "@/db";
 import { categories, type CategoryRow } from "@/db/schema";
+import { cloudinary } from "@/lib/cloudinary";
 import { asc, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -50,15 +49,29 @@ async function saveCategoryImage(file: File | null): Promise<string | null> {
   const ext = extFromImageType(file.type);
   if (!ext) return null;
 
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "categories");
-  await mkdir(uploadDir, { recursive: true });
-  const fileName = `${randomUUID()}.${ext}`;
-  const outputPath = path.join(uploadDir, fileName);
+  const bytes = Buffer.from(await file.arrayBuffer());
+  const publicId = `${randomUUID()}.${ext}`;
 
-  const bytes = await file.arrayBuffer();
-  await writeFile(outputPath, Buffer.from(bytes));
+  const uploaded = await new Promise<{ secure_url?: string }>((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "rolush/categories",
+        public_id: publicId,
+        resource_type: "image",
+      },
+      (error, result) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve(result ?? {});
+      },
+    );
 
-  return `/uploads/categories/${fileName}`;
+    stream.end(bytes);
+  });
+
+  return uploaded.secure_url ?? null;
 }
 
 export async function listCategories(): Promise<CategoryRow[]> {

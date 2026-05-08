@@ -3,6 +3,7 @@
 import type { ItemWithImages } from "@/actions/items";
 import { AddToCartButton } from "@/components/site/add-to-cart-button";
 import type { CategoryRow } from "@/db/schema";
+import { optimizeCloudinaryImageUrl } from "@/lib/cloudinary-url";
 import Link from "next/link";
 import Image from "next/image";
 import { useMemo, useState } from "react";
@@ -61,7 +62,10 @@ export function SiteCategories({ categories, items }: SiteCategoriesProps) {
                       >
                         {category.imageUrl ? (
                           <Image
-                            src={category.imageUrl}
+                            src={optimizeCloudinaryImageUrl(category.imageUrl, {
+                              width: 240,
+                              height: 240,
+                            })}
                             alt={category.name}
                             className="h-full w-full object-cover"
                             fill
@@ -107,7 +111,10 @@ export function SiteCategories({ categories, items }: SiteCategoriesProps) {
                       >
                         {item.images[0] ? (
                           <Image
-                            src={item.images[0]}
+                            src={optimizeCloudinaryImageUrl(item.images[0], {
+                              width: 900,
+                              height: 900,
+                            })}
                             alt={item.name}
                             className="aspect-square w-full rounded-xl object-cover"
                             width={600}

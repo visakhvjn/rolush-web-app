@@ -2,6 +2,7 @@
 
 import { auth } from "@/auth";
 import { getDb } from "@/db";
+import { cloudinary } from "@/lib/cloudinary";
 import {
   categories,
   itemImages,
@@ -10,8 +11,6 @@ import {
   type ItemRow,
 } from "@/db/schema";
 import { and, asc, count, desc, eq, inArray, sql } from "drizzle-orm";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -138,9 +137,6 @@ async function saveUploadedImages(files: File[]): Promise<string[]> {
   if (validFiles.length === 0) return [];
   if (validFiles.length > MAX_IMAGE_COUNT) return [];
 
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "items");
-  await mkdir(uploadDir, { recursive: true });
-
   const savedUrls: string[] = [];
   for (const file of validFiles) {
     if (!ALLOWED_IMAGE_TYPES.has(file.type)) return [];
@@ -149,11 +145,30 @@ async function saveUploadedImages(files: File[]): Promise<string[]> {
     const ext = extFromImageType(file.type);
     if (!ext) return [];
 
-    const fileName = `${randomUUID()}.${ext}`;
-    const outputPath = path.join(uploadDir, fileName);
-    const arrayBuffer = await file.arrayBuffer();
-    await writeFile(outputPath, Buffer.from(arrayBuffer));
-    savedUrls.push(`/uploads/items/${fileName}`);
+    const bytes = Buffer.from(await file.arrayBuffer());
+    const publicId = `${randomUUID()}.${ext}`;
+
+    const uploaded = await new Promise<{ secure_url?: string }>((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: "rolush/items",
+          public_id: publicId,
+          resource_type: "image",
+        },
+        (error, result) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve(result ?? {});
+        },
+      );
+
+      stream.end(bytes);
+    });
+
+    if (!uploaded.secure_url) return [];
+    savedUrls.push(uploaded.secure_url);
   }
 
   return savedUrls;

@@ -1,4 +1,5 @@
 import type { ItemWithImages } from "@/actions/items";
+import { optimizeCloudinaryImageUrl } from "@/lib/cloudinary-url";
 import Link from "next/link";
 
 type SiteServicesProps = {
@@ -30,7 +31,10 @@ export function SiteServices({ items }: SiteServicesProps) {
               >
                 {item.images[0] ? (
                   <img
-                    src={item.images[0]}
+                    src={optimizeCloudinaryImageUrl(item.images[0], {
+                      width: 1200,
+                      height: 900,
+                    })}
                     alt={item.name}
                     className="mb-4 aspect-[4/3] w-full rounded-xl object-cover"
                   />

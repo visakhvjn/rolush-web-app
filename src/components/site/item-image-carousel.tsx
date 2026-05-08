@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { optimizeCloudinaryImageUrl } from "@/lib/cloudinary-url";
 import { useState } from "react";
 
 type ItemImageCarouselProps = {
@@ -18,7 +19,7 @@ export function ItemImageCarousel({ images, name }: ItemImageCarouselProps) {
   }
 
   const safeIndex = ((current % images.length) + images.length) % images.length;
-  const image = images[safeIndex];
+  const image = optimizeCloudinaryImageUrl(images[safeIndex], { width: 1200, height: 900 });
 
   return (
     <div>
@@ -50,7 +51,7 @@ export function ItemImageCarousel({ images, name }: ItemImageCarouselProps) {
                   }`}
                 >
                   <Image
-                    src={img}
+                    src={optimizeCloudinaryImageUrl(img, { width: 240, height: 180 })}
                     alt={`${name} thumbnail ${index + 1}`}
                     width={120}
                     height={90}

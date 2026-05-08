@@ -2,6 +2,7 @@ import { listActiveItems, type ItemWithImages } from "@/actions/items";
 import { SiteFooter } from "@/components/site/footer";
 import { SiteHeader } from "@/components/site/header";
 import { AddToCartButton } from "@/components/site/add-to-cart-button";
+import { optimizeCloudinaryImageUrl } from "@/lib/cloudinary-url";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -61,7 +62,10 @@ export default async function MenuPage() {
                 >
                   {item.images[0] ? (
                     <Image
-                      src={item.images[0]}
+                      src={optimizeCloudinaryImageUrl(item.images[0], {
+                        width: 1200,
+                        height: 900,
+                      })}
                       alt={item.name}
                       className="aspect-[4/3] w-full rounded-xl object-cover"
                       width={800}

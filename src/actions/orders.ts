@@ -3,10 +3,9 @@
 import { auth } from "@/auth";
 import { getDb } from "@/db";
 import { orders, type OrderRow } from "@/db/schema";
+import { cloudinary } from "@/lib/cloudinary";
 import { and, desc, eq, gte, ilike, or } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -73,14 +72,29 @@ async function saveCustomOrderReferenceImage(file: File): Promise<string | null>
   const ext = extFromImageType(file.type);
   if (!ext) return null;
 
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "orders");
-  await mkdir(uploadDir, { recursive: true });
+  const bytes = Buffer.from(await file.arrayBuffer());
+  const publicId = `${randomUUID()}.${ext}`;
 
-  const fileName = `${randomUUID()}.${ext}`;
-  const outputPath = path.join(uploadDir, fileName);
-  const arrayBuffer = await file.arrayBuffer();
-  await writeFile(outputPath, Buffer.from(arrayBuffer));
-  return `/uploads/orders/${fileName}`;
+  const uploaded = await new Promise<{ secure_url?: string }>((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "rolush/orders",
+        public_id: publicId,
+        resource_type: "image",
+      },
+      (error, result) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve(result ?? {});
+      },
+    );
+
+    stream.end(bytes);
+  });
+
+  return uploaded.secure_url ?? null;
 }
 
 export type CreateOrderState =
