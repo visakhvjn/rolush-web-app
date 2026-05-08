@@ -12,7 +12,6 @@ const nextConfig: NextConfig = {
     root: path.resolve(process.cwd()),
   },
   images: {
-    domains: ["res.cloudinary.com"],
     remotePatterns: [
       {
         protocol: "https",
